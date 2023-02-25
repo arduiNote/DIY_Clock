@@ -1,3 +1,10 @@
+
+int sensorPin = A0;    // select the input pin for the potentiometer
+
+int sensorValue = 0;  // variable to store the value coming from the sensor
+
+int brightness;
+
 const int bit_clock_pin = 11;
 const int digit_clock_pin = 10;
 const int data_pin = 9;
@@ -39,6 +46,10 @@ void setup()
 
   pinMode(digit_clock_pin, OUTPUT); 
 
+  pinMode(6, OUTPUT);
+
+  Serial.begin(9600);
+
 }
 
 
@@ -64,7 +75,12 @@ void display_new_time()
 }
 
 
-void loop(){}
+void loop()
+{
+    sensorValue = analogRead(sensorPin);
+    brightness=map(sensorValue, 50 ,300, 0, 200);
+    analogWrite(6, brightness);
+}
 
 
 void InterruptFunction(){
