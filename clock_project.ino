@@ -1,12 +1,17 @@
 const int bit_clock_pin = 11;
 const int digit_clock_pin = 10;
 const int data_pin = 9;
+int Second = 0;
+int Minute = 0;
+int Hour = 0;
+
+int digits[4]={0};
 
 const byte digit_pattern[10] =
 
 {
 
-  B1000000,   // 0
+  B10000000,   // 0
   B11111001,  // 1
   B00100100,  // 2 
   B01000110,  // 3
@@ -37,7 +42,7 @@ void setup()
 }
 
 
-void update_one_digit(int data)
+void display_new_time()
 
 {
 
@@ -45,34 +50,99 @@ void update_one_digit(int data)
 
   byte pattern;
 
-  pattern = digit_pattern[data];
-
   digitalWrite(digit_clock_pin, LOW);
-
-  shiftOut(data_pin, bit_clock_pin, MSBFIRST, ~pattern);
+  
+  for (int i = 0; i<4; i++)
+  {
+    pattern = digit_pattern[digits[i]];
+    shiftOut(data_pin, bit_clock_pin, MSBFIRST, ~pattern);
+  }
 
   digitalWrite(digit_clock_pin, HIGH);
 
 
 }
 
-void loop()
 
-{
+void loop(){}
 
-}
 
 void InterruptFunction(){
   
-    counter++;
+    Second=61;  // needs to be:  Second++;
     
-    if (counter == 10)
+    if (Second > 60)
     {
-      counter = 0;
-    }
+      Second = 0;
+      Minute++;
+      if (Minute > 60)
+      {
+        Minute=1;
+        Hour++;
+        if (Hour > 12)
+        {
+         Hour=0;
+        }
+      }
+      calculate_new_Digits();
+      }
+
+     
     
-    update_one_digit(counter);
+}
+
+void calculate_new_Digits(){
+  
+    
+    if(Hour >12)
+    {
+      digits[0]=1;
+      digits[1]= Hour-10;      
+    }
+    else
+    {
+      digits[0]=0;
+      digits[1]=Hour;
+    }
+
+    if(Minute >= 10 && Minute <20)
+    {
+      digits[2]=1;
+      digits[3]= Minute-10;      
+    }
+    else if(Minute >= 20 && Minute <30)
+    {
+      digits[2]=2;
+      digits[3]= Minute-20;      
+    }
+    else if(Minute >= 30 && Minute <40)
+    {
+      digits[2]=3;
+      digits[3]= Minute-30;      
+    } 
+    else if(Minute >= 40 && Minute <50)
+    {
+      digits[2]=4;
+      digits[3]= Minute-40;      
+    }  
+    else if(Minute >= 50 && Minute <60)
+    {
+      digits[2]=5;
+      digits[3]= Minute-50;      
+    } 
+    else
+    {
+      digits[2]=0;
+      digits[3]=Minute;
+    }   
+        
+      
+    display_new_time();
+
+    
   }
 
 
 
+
+  
