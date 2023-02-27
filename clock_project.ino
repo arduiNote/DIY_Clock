@@ -1,21 +1,26 @@
-// Rotary Encoder Inputs
 #define CLK 7
 #define DT 5
 #define SW 3
+#define bit_clock_pin 11
+#define digit_clock_pin 10
+#define data_pin 9
+
+
 int helpvar=0;
+int helpvar1=0;
+
 int currentStateCLK;
 int lastStateCLK;
 String currentDir ="";
 
-int sensorPin = A0;    // select the input pin for the potentiometer
+int sensorPin = A0;    
 
-int sensorValue = 0;  // variable to store the value coming from the sensor
+int sensorValue = 0;  
 
 int brightness;
 
-const int bit_clock_pin = 11;
-const int digit_clock_pin = 10;
-const int data_pin = 9;
+
+
 int Second = 0;
 int Minute = 0;
 int Hour = 0;
@@ -41,12 +46,11 @@ const byte digit_pattern[10] =
 
 };
 
-unsigned int counter = 0;
 
 void setup()
 
 {
-  pinMode(2, INPUT_PULLUP);
+  pinMode(2, INPUT);
   
   attachInterrupt(digitalPinToInterrupt(2), InterruptFunction, RISING);
 
@@ -70,40 +74,26 @@ void setup()
 
   Serial.begin(9600);
 
-}
-
-
-void display_new_time()
-
-{
-
-
-
-  byte pattern;
-
-  digitalWrite(digit_clock_pin, LOW);
-  
-  for (int i = 0; i<4; i++)
-  {
-    pattern = digit_pattern[digits[i]];
-    shiftOut(data_pin, bit_clock_pin, MSBFIRST, ~pattern);
-  }
-
-  digitalWrite(digit_clock_pin, HIGH);
-
+  display_new_time();
 
 }
+
+
 
 
 void loop()
 {
-    sensorValue = analogRead(sensorPin);
+  
+    sensorValue = analogRead(sensorPin);              // Read LDR brightness sensor
     brightness=map(sensorValue, 50 ,300, 0, 200);
-    analogWrite(6, brightness);
+    analogWrite(6, brightness);                       // change brighntess of led display using pwm
 
-    if(Time_Change_in_Progress)
-    
+
+
+
+    if(Time_Change_in_Progress)                         // Change Time with Rotary encoder
       {
+        Serial.println("manual in progress");
           // Read the current state of CLK
           currentStateCLK = digitalRead(CLK);
 
@@ -114,7 +104,6 @@ void loop()
              // If the DT state is different than the CLK state then
             // the encoder is rotating CCW so decrement
             if (digitalRead(DT) != currentStateCLK) {
-                counter --;
                 currentDir ="CCW";
             } else {
                 // Encoder is rotating CW so increment
@@ -141,10 +130,18 @@ void loop()
 }
 
 
-void InterruptFunction(){
-  
-    Second=61;  // needs to be:  Second++;
-    
+
+
+
+
+
+
+void InterruptFunction(){                   //This function detects the 2Hz input frequency and is called every 0.5 seconds
+  if (helpvar1==2){                         //this is why helpvar1 helps us to only update the second every 2nd interrupt
+    helpvar1=0;
+    Serial.println(Second);
+    Second++;                               //increase second
+        Serial.println(Second);
     if (Second > 60)
     {
       Second = 0;
@@ -160,14 +157,16 @@ void InterruptFunction(){
       }
       calculate_new_Digits();
       }
+  }
+  helpvar1++;
 
      
     
 }
 
-void calculate_new_Digits(){
+void calculate_new_Digits(){                  // Clock Algorithm - update the digit array that was created earlier
   
-    
+    Serial.println("eine Minute zuende"); 
     if(Hour >10)
     {
       digits[0]=1;
@@ -216,15 +215,34 @@ void calculate_new_Digits(){
     
   }
 
+void display_new_time()    // Shift out new Data to the Display
+{
+
+
+
+  byte pattern;
+
+  digitalWrite(digit_clock_pin, LOW);
+  
+  for (int i = 0; i<4; i++)
+  {
+    pattern = digit_pattern[digits[i]];
+    shiftOut(data_pin, bit_clock_pin, MSBFIRST, ~pattern);
+  }
+
+  digitalWrite(digit_clock_pin, HIGH);
+
+}
+
 void Button_interrupt(){
   
 
-  if(helpvar==1)Time_Change_in_Progress=!Time_Change_in_Progress; //Debouncing
+  if(helpvar==1)Time_Change_in_Progress=!Time_Change_in_Progress; // Combine Button Pressed and Button Released, to only do one interrupt
   helpvar=!helpvar;
   
   Serial.println(Time_Change_in_Progress);
   
-  delay(5000);
+  delay(2000);
   }
 
 
